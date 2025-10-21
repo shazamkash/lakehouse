@@ -48,9 +48,12 @@ services:
     networks:
       - lakehouse-network
 
-  # Spark Master
+  # Spark Master with Delta Lake 3.3.0 JARs pre-installed
   spark-master:
-    image: bitnami/spark:3.5.0
+    build:
+      context: ./docker/spark
+      dockerfile: Dockerfile
+    image: lakehouse-spark:3.5.0-delta3.3.0
     container_name: lakehouse-spark-master
     environment:
       - SPARK_MODE=master
@@ -80,9 +83,9 @@ services:
     depends_on:
       - minio
 
-  # Spark Worker
+  # Spark Worker with Delta Lake 3.3.0 JARs pre-installed
   spark-worker:
-    image: bitnami/spark:3.5.0
+    image: lakehouse-spark:3.5.0-delta3.3.0
     container_name: lakehouse-spark-worker
     environment:
       - SPARK_MODE=worker

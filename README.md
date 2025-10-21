@@ -16,11 +16,13 @@ This project provides a fully containerized lakehouse platform with the followin
 ## Features
 
 - Store data files as Parquet in MinIO (S3-compatible storage)
-- Convert S3 objects to Delta tables
+- Convert S3 objects to Delta tables (Delta Lake 3.3.0)
 - Register Delta tables in Unity Catalog
 - Query Delta tables using Trino
 - Dockerized setup for easy deployment
+- **Offline deployment support** - All JARs pre-bundled (no internet required)
 - Python client library for seamless integration
+- Remote server deployment with environment variable configuration
 
 ## Quick Start
 
@@ -209,10 +211,12 @@ Having issues? Check the [Troubleshooting Guide](TROUBLESHOOTING.md) for solutio
 
 - [Getting Started Guide](GETTING_STARTED.md) - Step-by-step setup instructions
 - [Deployment Guide](DEPLOYMENT.md) - Remote server deployment instructions
+- [Offline Deployment Guide](OFFLINE_DEPLOYMENT.md) - Deploy without internet access
 - [Java Setup Guide](JAVA_SETUP.md) - Java requirements and alternatives
 - [Architecture Documentation](ARCHITECTURE.md) - Detailed technical overview
 - [Troubleshooting Guide](TROUBLESHOOTING.md) - Common issues and solutions
 - [Server Scripts](server/README.md) - Server-side Delta table operations
+- [Custom Spark Image](docker/spark/README.md) - Details on bundled JARs
 
 ## License
 

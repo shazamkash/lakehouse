@@ -122,13 +122,14 @@ spark.stop()
         return False
 
     # Execute PySpark script in container
+    # Note: Delta Lake 3.3.0 JARs are pre-installed in the Docker image (no download needed)
     exec_cmd = [
         "docker", "exec", "lakehouse-spark-master",
         "spark-submit",
         "--master", "local[*]",
         "--conf", "spark.sql.extensions=io.delta.sql.DeltaSparkSessionExtension",
         "--conf", "spark.sql.catalog.spark_catalog=org.apache.spark.sql.delta.catalog.DeltaCatalog",
-        "--packages", "io.delta:delta-core_2.12:2.4.0",
+        # JARs are pre-loaded in /opt/bitnami/spark/jars/ - no --packages needed
         script_path
     ]
 
