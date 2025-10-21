@@ -53,11 +53,22 @@ services:
       - SPARK_RPC_ENCRYPTION_ENABLED=no
       - SPARK_LOCAL_STORAGE_ENCRYPTION_ENABLED=no
       - SPARK_SSL_ENABLED=no
+      # Delta Lake configuration
+      - SPARK_DEFAULTS_CONF_spark.sql.extensions=io.delta.sql.DeltaSparkSessionExtension
+      - SPARK_DEFAULTS_CONF_spark.sql.catalog.spark_catalog=org.apache.spark.sql.delta.catalog.DeltaCatalog
+      # S3 (MinIO) configuration
+      - SPARK_DEFAULTS_CONF_spark.hadoop.fs.s3a.endpoint=http://minio:9000
+      - SPARK_DEFAULTS_CONF_spark.hadoop.fs.s3a.access.key=minioadmin
+      - SPARK_DEFAULTS_CONF_spark.hadoop.fs.s3a.secret.key=minioadmin
+      - SPARK_DEFAULTS_CONF_spark.hadoop.fs.s3a.path.style.access=true
+      - SPARK_DEFAULTS_CONF_spark.hadoop.fs.s3a.impl=org.apache.hadoop.fs.s3a.S3AFileSystem
+      - SPARK_DEFAULTS_CONF_spark.hadoop.fs.s3a.connection.ssl.enabled=false
+      # Warehouse location
+      - SPARK_DEFAULTS_CONF_spark.sql.warehouse.dir=s3a://warehouse/
     ports:
       - "8080:8080"
       - "7077:7077"
     volumes:
-      - ./config/spark/spark-defaults.conf:/opt/bitnami/spark/conf/spark-defaults.conf
       - spark-warehouse:/opt/spark-warehouse
     networks:
       - lakehouse-network
@@ -77,8 +88,19 @@ services:
       - SPARK_RPC_ENCRYPTION_ENABLED=no
       - SPARK_LOCAL_STORAGE_ENCRYPTION_ENABLED=no
       - SPARK_SSL_ENABLED=no
+      # Delta Lake configuration
+      - SPARK_DEFAULTS_CONF_spark.sql.extensions=io.delta.sql.DeltaSparkSessionExtension
+      - SPARK_DEFAULTS_CONF_spark.sql.catalog.spark_catalog=org.apache.spark.sql.delta.catalog.DeltaCatalog
+      # S3 (MinIO) configuration
+      - SPARK_DEFAULTS_CONF_spark.hadoop.fs.s3a.endpoint=http://minio:9000
+      - SPARK_DEFAULTS_CONF_spark.hadoop.fs.s3a.access.key=minioadmin
+      - SPARK_DEFAULTS_CONF_spark.hadoop.fs.s3a.secret.key=minioadmin
+      - SPARK_DEFAULTS_CONF_spark.hadoop.fs.s3a.path.style.access=true
+      - SPARK_DEFAULTS_CONF_spark.hadoop.fs.s3a.impl=org.apache.hadoop.fs.s3a.S3AFileSystem
+      - SPARK_DEFAULTS_CONF_spark.hadoop.fs.s3a.connection.ssl.enabled=false
+      # Warehouse location
+      - SPARK_DEFAULTS_CONF_spark.sql.warehouse.dir=s3a://warehouse/
     volumes:
-      - ./config/spark/spark-defaults.conf:/opt/bitnami/spark/conf/spark-defaults.conf
       - spark-warehouse:/opt/spark-warehouse
     networks:
       - lakehouse-network
