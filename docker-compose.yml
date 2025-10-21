@@ -1,0 +1,139 @@
+version: '3.8'
+
+services:
+  # MinIO - S3 Compatible Object Storage
+  minio:
+    image: minio/minio:latest
+    container_name: lakehouse-minio
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    command: server /data --console-address ":9001"
+    volumes:
+      - minio-data:/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+    networks:
+      - lakehouse-network
+
+  # MinIO Client - Create buckets on startup
+  minio-setup:
+    image: minio/mc:latest
+    container_name: lakehouse-minio-setup
+    depends_on:
+      - minio
+    entrypoint: >
+      /bin/sh -c "
+      sleep 5;
+      /usr/bin/mc alias set myminio http://minio:9000 minioadmin minioadmin;
+      /usr/bin/mc mb myminio/lakehouse --ignore-existing;
+      /usr/bin/mc mb myminio/warehouse --ignore-existing;
+      /usr/bin/mc mb myminio/raw-data --ignore-existing;
+      /usr/bin/mc policy set download myminio/lakehouse;
+      /usr/bin/mc policy set download myminio/warehouse;
+      /usr/bin/mc policy set download myminio/raw-data;
+      exit 0;
+      "
+    networks:
+      - lakehouse-network
+
+  # Spark Master
+  spark-master:
+    image: bitnami/spark:3.5.0
+    container_name: lakehouse-spark-master
+    environment:
+      - SPARK_MODE=master
+      - SPARK_RPC_AUTHENTICATION_ENABLED=no
+      - SPARK_RPC_ENCRYPTION_ENABLED=no
+      - SPARK_LOCAL_STORAGE_ENCRYPTION_ENABLED=no
+      - SPARK_SSL_ENABLED=no
+    ports:
+      - "8080:8080"
+      - "7077:7077"
+    volumes:
+      - ./config/spark/spark-defaults.conf:/opt/bitnami/spark/conf/spark-defaults.conf
+      - spark-warehouse:/opt/spark-warehouse
+    networks:
+      - lakehouse-network
+    depends_on:
+      - minio
+
+  # Spark Worker
+  spark-worker:
+    image: bitnami/spark:3.5.0
+    container_name: lakehouse-spark-worker
+    environment:
+      - SPARK_MODE=worker
+      - SPARK_MASTER_URL=spark://spark-master:7077
+      - SPARK_WORKER_MEMORY=2G
+      - SPARK_WORKER_CORES=2
+      - SPARK_RPC_AUTHENTICATION_ENABLED=no
+      - SPARK_RPC_ENCRYPTION_ENABLED=no
+      - SPARK_LOCAL_STORAGE_ENCRYPTION_ENABLED=no
+      - SPARK_SSL_ENABLED=no
+    volumes:
+      - ./config/spark/spark-defaults.conf:/opt/bitnami/spark/conf/spark-defaults.conf
+      - spark-warehouse:/opt/spark-warehouse
+    networks:
+      - lakehouse-network
+    depends_on:
+      - spark-master
+
+  # Unity Catalog - Metadata and Governance
+  unity-catalog:
+    image: unitycatalog/unitycatalog:latest
+    container_name: lakehouse-unity-catalog
+    ports:
+      - "8081:8080"
+    environment:
+      - UC_SERVER_HOST=0.0.0.0
+      - UC_SERVER_PORT=8080
+      - AWS_ACCESS_KEY_ID=minioadmin
+      - AWS_SECRET_ACCESS_KEY=minioadmin
+      - AWS_REGION=us-east-1
+      - AWS_S3_ENDPOINT=http://minio:9000
+    volumes:
+      - unity-catalog-data:/etc/unitycatalog
+      - ./config/unity-catalog:/config
+    networks:
+      - lakehouse-network
+    depends_on:
+      - minio
+    command: ["bin/start-uc-server"]
+
+  # Trino - Distributed SQL Query Engine
+  trino:
+    image: trinodb/trino:435
+    container_name: lakehouse-trino
+    ports:
+      - "8082:8080"
+    volumes:
+      - ./config/trino/catalog:/etc/trino/catalog
+      - ./config/trino/config.properties:/etc/trino/config.properties
+    networks:
+      - lakehouse-network
+    depends_on:
+      - minio
+      - unity-catalog
+    environment:
+      - AWS_ACCESS_KEY_ID=minioadmin
+      - AWS_SECRET_ACCESS_KEY=minioadmin
+      - AWS_REGION=us-east-1
+
+volumes:
+  minio-data:
+    driver: local
+  spark-warehouse:
+    driver: local
+  unity-catalog-data:
+    driver: local
+
+networks:
+  lakehouse-network:
+    driver: bridge
