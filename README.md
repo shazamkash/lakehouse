@@ -44,10 +44,29 @@ pip install -e ./client
 
 ### Basic Usage
 
+#### Option 1: SimpleLakehouseClient (No Java Required) - Recommended for Remote Deployment
+
+```python
+from lakehouse_client import SimpleLakehouseClient
+
+# Initialize client (no Java needed!)
+client = SimpleLakehouseClient()
+
+# Upload data as Parquet to MinIO
+s3_uri = client.upload_parquet("data.csv", "raw-data", "my-dataset")
+
+# Create Delta table on server (see server/create_delta_table.py)
+# Then query the data
+results = client.query_to_dataframe("SELECT * FROM delta.main.default.my_table")
+print(results)
+```
+
+#### Option 2: Full LakehouseClient (Requires Java 17+)
+
 ```python
 from lakehouse_client import LakehouseClient
 
-# Initialize client (uses localhost by default)
+# Initialize client (requires Java 17+ installed locally)
 client = LakehouseClient()
 
 # Upload data as Parquet to MinIO
@@ -55,16 +74,18 @@ client.upload_parquet("data.csv", "raw-data", "my-dataset")
 
 # Convert to Delta table and register in Unity Catalog
 client.create_delta_table(
-    s3_path="s3://raw-data/my-dataset.parquet",
+    s3_path="s3a://raw-data/my-dataset.parquet",
     catalog="main",
     schema="default",
     table="my_table"
 )
 
 # Query the data
-results = client.query("SELECT * FROM main.default.my_table LIMIT 10")
+results = client.query("SELECT * FROM delta.main.default.my_table LIMIT 10")
 print(results)
 ```
+
+**Note**: Full client requires Java 17+. See [JAVA_SETUP.md](JAVA_SETUP.md) for installation instructions.
 
 ## Remote Server Deployment
 
@@ -188,8 +209,10 @@ Having issues? Check the [Troubleshooting Guide](TROUBLESHOOTING.md) for solutio
 
 - [Getting Started Guide](GETTING_STARTED.md) - Step-by-step setup instructions
 - [Deployment Guide](DEPLOYMENT.md) - Remote server deployment instructions
+- [Java Setup Guide](JAVA_SETUP.md) - Java requirements and alternatives
 - [Architecture Documentation](ARCHITECTURE.md) - Detailed technical overview
 - [Troubleshooting Guide](TROUBLESHOOTING.md) - Common issues and solutions
+- [Server Scripts](server/README.md) - Server-side Delta table operations
 
 ## License
 
