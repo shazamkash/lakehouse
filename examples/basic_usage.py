@@ -6,24 +6,38 @@ This script demonstrates:
 2. Creating a Delta table from the Parquet file
 3. Registering the table in Unity Catalog
 4. Querying the table via Trino
+
+For remote server deployment:
+- Set environment variable: export LAKEHOUSE_HOST=10.16.36.36
+- Or pass explicit parameters to LakehouseClient()
 """
 
 from lakehouse_client import LakehouseClient
 import pandas as pd
 
+# Optional: Load environment variables from .env file
+# from dotenv import load_dotenv
+# load_dotenv()
+
 
 def main():
     # Initialize the client
     print("Initializing Lakehouse Client...")
-    client = LakehouseClient(
-        minio_endpoint="http://localhost:9000",
-        minio_access_key="minioadmin",
-        minio_secret_key="minioadmin",
-        spark_master="spark://localhost:7077",
-        trino_host="localhost",
-        trino_port=8082,
-        unity_catalog_url="http://localhost:8081",
-    )
+
+    # Option 1: Use environment variables (recommended for remote deployment)
+    # Just set LAKEHOUSE_HOST and the client will configure automatically
+    client = LakehouseClient()
+
+    # Option 2: Explicit configuration (uncomment to use)
+    # client = LakehouseClient(
+    #     minio_endpoint="http://10.16.36.36:9000",
+    #     minio_access_key="minioadmin",
+    #     minio_secret_key="minioadmin",
+    #     spark_master="spark://10.16.36.36:7077",
+    #     trino_host="10.16.36.36",
+    #     trino_port=8082,
+    #     unity_catalog_url="http://10.16.36.36:8081",
+    # )
 
     # Example 1: Create and upload a sample dataset
     print("\n" + "="*60)

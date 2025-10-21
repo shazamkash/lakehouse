@@ -3,6 +3,7 @@ Main Lakehouse Client integrating all components.
 """
 
 from typing import Optional, List, Dict, Any, Union
+import os
 import pandas as pd
 
 from .storage import StorageManager
@@ -23,37 +24,84 @@ class LakehouseClient:
 
     def __init__(
         self,
-        minio_endpoint: str = "http://localhost:9000",
-        minio_access_key: str = "minioadmin",
-        minio_secret_key: str = "minioadmin",
-        spark_master: str = "spark://localhost:7077",
-        trino_host: str = "localhost",
-        trino_port: int = 8082,
-        trino_user: str = "admin",
-        unity_catalog_url: str = "http://localhost:8081",
+        minio_endpoint: Optional[str] = None,
+        minio_access_key: Optional[str] = None,
+        minio_secret_key: Optional[str] = None,
+        spark_master: Optional[str] = None,
+        trino_host: Optional[str] = None,
+        trino_port: Optional[int] = None,
+        trino_user: Optional[str] = None,
+        unity_catalog_url: Optional[str] = None,
     ):
         """
         Initialize the Lakehouse Client.
 
+        Configuration priority:
+        1. Explicitly passed parameters
+        2. Environment variables (LAKEHOUSE_*)
+        3. Default values
+
+        Environment Variables:
+            LAKEHOUSE_HOST: Remote server IP/hostname (e.g., 10.16.36.36)
+            LAKEHOUSE_MINIO_ENDPOINT: MinIO endpoint URL
+            LAKEHOUSE_MINIO_ACCESS_KEY: MinIO access key
+            LAKEHOUSE_MINIO_SECRET_KEY: MinIO secret key
+            LAKEHOUSE_SPARK_MASTER: Spark master URL
+            LAKEHOUSE_TRINO_HOST: Trino server host
+            LAKEHOUSE_TRINO_PORT: Trino server port
+            LAKEHOUSE_TRINO_USER: Trino username
+            LAKEHOUSE_UNITY_CATALOG_URL: Unity Catalog URL
+
         Args:
-            minio_endpoint: MinIO endpoint URL
-            minio_access_key: MinIO access key
-            minio_secret_key: MinIO secret key
-            spark_master: Spark master URL
-            trino_host: Trino server host
-            trino_port: Trino server port
-            trino_user: Trino username
-            unity_catalog_url: Unity Catalog server URL
+            minio_endpoint: MinIO endpoint URL (default: http://localhost:9000)
+            minio_access_key: MinIO access key (default: minioadmin)
+            minio_secret_key: MinIO secret key (default: minioadmin)
+            spark_master: Spark master URL (default: spark://localhost:7077)
+            trino_host: Trino server host (default: localhost)
+            trino_port: Trino server port (default: 8082)
+            trino_user: Trino username (default: admin)
+            unity_catalog_url: Unity Catalog server URL (default: http://localhost:8081)
         """
+        # Get remote host from environment or use localhost
+        lakehouse_host = os.getenv("LAKEHOUSE_HOST", "localhost")
+
+        # Resolve configuration with priority: param > env > default
+        minio_endpoint = minio_endpoint or os.getenv(
+            "LAKEHOUSE_MINIO_ENDPOINT", f"http://{lakehouse_host}:9000"
+        )
+        minio_access_key = minio_access_key or os.getenv(
+            "LAKEHOUSE_MINIO_ACCESS_KEY", "minioadmin"
+        )
+        minio_secret_key = minio_secret_key or os.getenv(
+            "LAKEHOUSE_MINIO_SECRET_KEY", "minioadmin"
+        )
+        spark_master = spark_master or os.getenv(
+            "LAKEHOUSE_SPARK_MASTER", f"spark://{lakehouse_host}:7077"
+        )
+        trino_host = trino_host or os.getenv(
+            "LAKEHOUSE_TRINO_HOST", lakehouse_host
+        )
+        trino_port = trino_port or int(os.getenv("LAKEHOUSE_TRINO_PORT", "8082"))
+        trino_user = trino_user or os.getenv("LAKEHOUSE_TRINO_USER", "admin")
+        unity_catalog_url = unity_catalog_url or os.getenv(
+            "LAKEHOUSE_UNITY_CATALOG_URL", f"http://{lakehouse_host}:8081"
+        )
+
+        # For Spark (DeltaManager), use internal Docker network endpoint
+        # This allows Spark (running inside Docker) to communicate with MinIO
+        minio_internal_endpoint = os.getenv(
+            "LAKEHOUSE_MINIO_INTERNAL_ENDPOINT", "http://minio:9000"
+        )
+
         self.storage = StorageManager(
-            endpoint=minio_endpoint,
+            endpoint=minio_endpoint,  # External endpoint for client
             access_key=minio_access_key,
             secret_key=minio_secret_key,
         )
 
         self.delta = DeltaManager(
             spark_master=spark_master,
-            minio_endpoint=minio_endpoint,
+            minio_endpoint=minio_internal_endpoint,  # Internal endpoint for Spark
             minio_access_key=minio_access_key,
             minio_secret_key=minio_secret_key,
             unity_catalog_url=unity_catalog_url,

@@ -1,11 +1,19 @@
 """
 Advanced usage example demonstrating partitioning, optimization, and views.
+
+For remote server deployment:
+- Set environment variable: export LAKEHOUSE_HOST=10.16.36.36
+- Client will automatically connect to the remote server
 """
 
 from lakehouse_client import LakehouseClient
 import pandas as pd
 import numpy as np
 from datetime import datetime, timedelta
+
+# Optional: Load environment variables from .env file
+# from dotenv import load_dotenv
+# load_dotenv()
 
 
 def generate_time_series_data(num_records=10000):

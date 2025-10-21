@@ -1,9 +1,19 @@
 """
 Quickstart example - Minimal code to get started with Lakehouse.
+
+For remote server deployment:
+1. Set environment variable: export LAKEHOUSE_HOST=10.16.36.36
+2. Or copy .env.example to .env and update LAKEHOUSE_HOST
+3. Client will automatically use the remote server
 """
 
 from lakehouse_client import LakehouseClient
 import pandas as pd
+
+# Optional: Load environment variables from .env file
+# Uncomment these lines if using .env file:
+# from dotenv import load_dotenv
+# load_dotenv()
 
 # Create sample data
 data = pd.DataFrame({
@@ -16,6 +26,8 @@ data = pd.DataFrame({
 data.to_csv('products.csv', index=False)
 
 # Initialize client
+# If LAKEHOUSE_HOST is set, client will connect to remote server automatically
+# Otherwise, defaults to localhost
 client = LakehouseClient()
 
 # One-step ingest: Upload to MinIO + Create Delta table + Register in Unity Catalog

@@ -47,7 +47,7 @@ pip install -e ./client
 ```python
 from lakehouse_client import LakehouseClient
 
-# Initialize client
+# Initialize client (uses localhost by default)
 client = LakehouseClient()
 
 # Upload data as Parquet to MinIO
@@ -65,6 +65,38 @@ client.create_delta_table(
 results = client.query("SELECT * FROM main.default.my_table LIMIT 10")
 print(results)
 ```
+
+## Remote Server Deployment
+
+To deploy on a remote server (e.g., 10.16.36.36):
+
+### On the Remote Server
+
+```bash
+# Start services
+docker-compose up -d
+```
+
+### On Your Local Machine
+
+```bash
+# Set the remote server IP
+export LAKEHOUSE_HOST=10.16.36.36
+
+# Or create a .env file
+cp .env.example .env
+# Edit .env and set LAKEHOUSE_HOST=10.16.36.36
+
+# Install client
+pip install -e ./client
+
+# Use the client (automatically connects to remote server)
+python examples/quickstart.py
+```
+
+The client will automatically connect to the remote server using the `LAKEHOUSE_HOST` environment variable.
+
+See the [Deployment Guide](DEPLOYMENT.md) for detailed instructions.
 
 ## Project Structure
 
@@ -155,6 +187,7 @@ Having issues? Check the [Troubleshooting Guide](TROUBLESHOOTING.md) for solutio
 ## Additional Documentation
 
 - [Getting Started Guide](GETTING_STARTED.md) - Step-by-step setup instructions
+- [Deployment Guide](DEPLOYMENT.md) - Remote server deployment instructions
 - [Architecture Documentation](ARCHITECTURE.md) - Detailed technical overview
 - [Troubleshooting Guide](TROUBLESHOOTING.md) - Common issues and solutions
 
