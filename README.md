@@ -142,6 +142,22 @@ pip install -e .
                       └─────────────┘
 ```
 
+## Troubleshooting
+
+Having issues? Check the [Troubleshooting Guide](TROUBLESHOOTING.md) for solutions to common problems:
+
+- Spark container permission errors
+- Connection issues between services
+- Port conflicts
+- Performance optimization
+- And more...
+
+## Additional Documentation
+
+- [Getting Started Guide](GETTING_STARTED.md) - Step-by-step setup instructions
+- [Architecture Documentation](ARCHITECTURE.md) - Detailed technical overview
+- [Troubleshooting Guide](TROUBLESHOOTING.md) - Common issues and solutions
+
 ## License
 
 MIT
