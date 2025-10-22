@@ -115,12 +115,12 @@ services:
     depends_on:
       - spark-master
 
-  # Unity Catalog - Metadata and Governance
+  # Unity Catalog - Metadata and Governance (REST API)
   unity-catalog:
     image: unitycatalog/unitycatalog:latest
     container_name: lakehouse-unity-catalog
     ports:
-      - "0.0.0.0:8081:8080"  # Unity Catalog API and UI - accessible externally
+      - "0.0.0.0:8081:8080"  # Unity Catalog REST API - accessible externally
     environment:
       - UC_SERVER_HOST=0.0.0.0
       - UC_SERVER_PORT=8080
@@ -136,6 +136,20 @@ services:
     depends_on:
       - minio
     command: ["bin/start-uc-server"]
+
+  # Unity Catalog UI (Web Interface)
+  unity-catalog-ui:
+    image: unitycatalog/unitycatalog-ui:latest
+    container_name: lakehouse-unity-catalog-ui
+    ports:
+      - "0.0.0.0:3000:3000"  # Unity Catalog UI - accessible externally
+    environment:
+      - REACT_APP_UC_API_URL=http://unity-catalog:8080
+      - REACT_APP_GOOGLE_AUTH_ENABLED=false
+    networks:
+      - lakehouse-network
+    depends_on:
+      - unity-catalog
 
   # Trino - Distributed SQL Query Engine
   trino:
