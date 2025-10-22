@@ -67,38 +67,40 @@ delta_path = f"s3a://warehouse/{catalog}/{schema}/{table}"
 print(f"Writing Delta table to {{delta_path}}")
 df.write.format("delta").mode("{mode}").save(delta_path)
 
-# Create catalog and schema if they don't exist
+# Create database if it doesn't exist
+# Note: Standalone Spark uses two-level namespace (database.table), not three-level (catalog.database.table)
+# We use the schema parameter as the database name
+database_name = f"{schema}"
 try:
-    spark.sql(f"CREATE CATALOG IF NOT EXISTS {catalog}")
-    print(f"Catalog '{catalog}' is ready")
+    spark.sql(f"CREATE DATABASE IF NOT EXISTS {{database_name}}")
+    print(f"Database '{{database_name}}' is ready")
 except Exception as e:
-    print(f"Catalog note: {{e}}")
+    print(f"Database note: {{e}}")
 
+# Register table using two-level namespace (database.table)
+table_name = f"{{database_name}}.{table}"
 try:
-    spark.sql(f"CREATE SCHEMA IF NOT EXISTS {catalog}.{schema}")
-    print(f"Schema '{catalog}.{schema}' is ready")
+    spark.sql(f"DROP TABLE IF EXISTS {{table_name}}")
+    print(f"Dropped existing table if present: {{table_name}}")
 except Exception as e:
-    print(f"Schema note: {{e}}")
-
-# Register table
-full_table_name = f"{catalog}.{schema}.{table}"
-spark.sql(f"DROP TABLE IF EXISTS {{full_table_name}}")
+    print(f"Drop table note: {{e}}")
 
 create_table_sql = f'''
-CREATE TABLE {{{{full_table_name}}}}
+CREATE TABLE {{{{table_name}}}}
 USING DELTA
 LOCATION '{{{{delta_path}}}}'
 '''
 
 spark.sql(create_table_sql)
-print(f"Table registered: {{full_table_name}}")
+print(f"Table registered: {{table_name}}")
 
 # Show table info
 print("\\nTable info:")
-spark.sql(f"DESCRIBE EXTENDED {{full_table_name}}").show(truncate=False)
+spark.sql(f"DESCRIBE EXTENDED {{table_name}}").show(truncate=False)
 
-print(f"\\nDelta table created successfully: {{full_table_name}}")
+print(f"\\nDelta table created successfully: {{table_name}}")
 print(f"Location: {{delta_path}}")
+print(f"Storage path includes catalog for organization: {catalog}/{schema}/{table}")
 
 spark.stop()
 """
@@ -106,8 +108,9 @@ spark.stop()
     # Save PySpark code to temporary file
     script_path = f"/tmp/create_delta_{table}.py"
 
-    print(f"Creating Delta table: {catalog}.{schema}.{table}")
+    print(f"Creating Delta table: {schema}.{table}")
     print(f"Source: {s3_path}")
+    print(f"Storage path: s3a://warehouse/{catalog}/{schema}/{table}")
     print(f"Mode: {mode}")
     print()
 
