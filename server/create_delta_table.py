@@ -96,11 +96,7 @@ except Exception as e:
     print(f"Drop table note: {{e}}")
 
 # Create external table in Unity Catalog pointing to S3 Delta location
-create_table_sql = f"""
-CREATE TABLE {{full_table_name}}
-USING DELTA
-LOCATION '{{delta_path}}'
-"""
+create_table_sql = "CREATE TABLE " + full_table_name + " USING DELTA LOCATION '" + delta_path + "'"
 
 spark.sql(create_table_sql)
 print(f"Table registered successfully: {{full_table_name}}")
