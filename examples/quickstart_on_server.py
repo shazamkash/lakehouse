@@ -87,8 +87,9 @@ print("Step 5: Querying data via Trino...")
 print()
 
 try:
-    # Note: Tables are discovered by Trino via file-based metastore
-    # Query format: delta.schema.table
+    # Note: Tables are registered in Unity Catalog via Spark as catalog.schema.table
+    # Trino discovers them via file-based metastore as delta.schema.table
+    # Unity Catalog provides metadata management while Trino handles querying
 
     # Query all data
     print("Query 1: All products")
