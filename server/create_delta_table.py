@@ -38,12 +38,19 @@ def create_delta_table(s3_path, catalog, schema, table, mode="overwrite"):
     pyspark_code = f"""
 from pyspark.sql import SparkSession
 
-# Create Spark session with Delta Lake configuration
+# Create Spark session with Delta Lake and S3/MinIO configuration
 # JARs are already pre-loaded in /opt/bitnami/spark/jars/
 spark = SparkSession.builder \\
     .appName("CreateDeltaTable") \\
     .config("spark.sql.extensions", "io.delta.sql.DeltaSparkSessionExtension") \\
     .config("spark.sql.catalog.spark_catalog", "org.apache.spark.sql.delta.catalog.DeltaCatalog") \\
+    .config("spark.hadoop.fs.s3a.endpoint", "http://minio:9000") \\
+    .config("spark.hadoop.fs.s3a.access.key", "minioadmin") \\
+    .config("spark.hadoop.fs.s3a.secret.key", "minioadmin") \\
+    .config("spark.hadoop.fs.s3a.path.style.access", "true") \\
+    .config("spark.hadoop.fs.s3a.impl", "org.apache.hadoop.fs.s3a.S3AFileSystem") \\
+    .config("spark.hadoop.fs.s3a.connection.ssl.enabled", "false") \\
+    .config("spark.sql.warehouse.dir", "s3a://warehouse/") \\
     .getOrCreate()
 
 # Read source data
