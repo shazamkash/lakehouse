@@ -75,11 +75,11 @@ except Exception as e:
 full_table_name = f"{catalog}.{schema}.{table}"
 spark.sql(f"DROP TABLE IF EXISTS {{full_table_name}}")
 
-create_table_sql = f\\"\\"\\"
-CREATE TABLE {{full_table_name}}
+create_table_sql = f'''
+CREATE TABLE {{{{full_table_name}}}}
 USING DELTA
-LOCATION '{{delta_path}}'
-\\"\\"\\"
+LOCATION '{{{{delta_path}}}}'
+'''
 
 spark.sql(create_table_sql)
 print(f"Table registered: {{full_table_name}}")
