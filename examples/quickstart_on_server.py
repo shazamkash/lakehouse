@@ -90,7 +90,7 @@ try:
     # Query all data
     print("Query 1: All products")
     df = client.query_to_dataframe(
-        "SELECT * FROM delta.main.default.products"
+        "SELECT * FROM delta.default.products"
     )
     print(df)
     print()
@@ -99,7 +99,7 @@ try:
     print("Query 2: Sales by region")
     summary = client.query_to_dataframe("""
         SELECT region, SUM(sales) as total_sales
-        FROM delta.main.default.products
+        FROM delta.default.products
         GROUP BY region
         ORDER BY total_sales DESC
     """)
@@ -116,7 +116,7 @@ except Exception as e:
     print("Troubleshooting:")
     print("1. Check Trino is running: docker-compose ps trino")
     print("2. Check Trino logs: docker-compose logs trino")
-    print("3. Verify table exists: docker exec lakehouse-trino trino --execute 'SHOW TABLES FROM delta.main.default'")
+    print("3. Verify table exists: docker exec lakehouse-trino trino --execute 'SHOW TABLES FROM delta.default'")
 
 finally:
     client.close()
