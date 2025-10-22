@@ -1,7 +1,7 @@
 # Custom Spark image with pre-downloaded Delta Lake and dependencies
 # This ensures all JARs are available even in offline/restricted environments
 
-FROM bitnami/spark:3.5.0
+FROM bitnami/spark:3.5.3
 
 USER root
 
