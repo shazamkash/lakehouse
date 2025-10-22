@@ -38,7 +38,8 @@ def create_delta_table(s3_path, catalog, schema, table, mode="overwrite"):
     pyspark_code = f"""
 from pyspark.sql import SparkSession
 
-# Create Spark session with Delta Lake, S3/MinIO, and Unity Catalog configuration
+# Create Spark session with Delta Lake and S3/MinIO configuration
+# No Hive metastore - using file-based metadata discovery
 # JARs are already pre-loaded in /opt/bitnami/spark/jars/
 spark = SparkSession.builder \\
     .appName("CreateDeltaTable") \\
@@ -51,8 +52,6 @@ spark = SparkSession.builder \\
     .config("spark.hadoop.fs.s3a.impl", "org.apache.hadoop.fs.s3a.S3AFileSystem") \\
     .config("spark.hadoop.fs.s3a.connection.ssl.enabled", "false") \\
     .config("spark.sql.warehouse.dir", "s3a://warehouse/") \\
-    .config("spark.hadoop.hive.metastore.uris", "thrift://unity-catalog:9083") \\
-    .enableHiveSupport() \\
     .getOrCreate()
 
 # Read source data
@@ -69,41 +68,16 @@ delta_path = f"s3a://warehouse/{catalog}/{schema}/{table}"
 print(f"Writing Delta table to {{delta_path}}")
 df.write.format("delta").mode("{mode}").save(delta_path)
 
-# Create database if it doesn't exist in Unity Catalog
-# Unity Catalog's Hive metastore uses two-level namespace (database.table)
-# This will be queryable via Trino as: delta.{schema}.{table}
-database_name = f"{schema}"
-try:
-    spark.sql(f"CREATE DATABASE IF NOT EXISTS {{database_name}}")
-    print(f"Database '{{database_name}}' is ready")
-except Exception as e:
-    print(f"Database note: {{e}}")
+# Get row count and show sample
+row_count = df.count()
+print(f"\\nWritten {{row_count}} rows to Delta Lake")
 
-# Register table using two-level namespace (database.table)
-table_name = f"{{database_name}}.{table}"
-try:
-    spark.sql(f"DROP TABLE IF EXISTS {{table_name}}")
-    print(f"Dropped existing table if present: {{table_name}}")
-except Exception as e:
-    print(f"Drop table note: {{e}}")
-
-create_table_sql = f'''
-CREATE TABLE {{table_name}}
-USING DELTA
-LOCATION '{{delta_path}}'
-'''
-
-spark.sql(create_table_sql)
-print(f"Table registered: {{table_name}}")
-
-# Show table info
-print("\\nTable info:")
-spark.sql(f"DESCRIBE EXTENDED {{table_name}}").show(truncate=False)
+print("\\nSample data (first 5 rows):")
+df.show(5, truncate=False)
 
 print(f"\\nDelta table created successfully!")
-print(f"Table registered in Unity Catalog: {{table_name}}")
 print(f"Storage location: {{delta_path}}")
-print(f"Query via Trino: SELECT * FROM delta.{schema}.{table}")
+print(f"Table will be discoverable in Trino at: delta.{schema}.{table}")
 
 spark.stop()
 """
@@ -111,12 +85,11 @@ spark.stop()
     # Save PySpark code to temporary file
     script_path = f"/tmp/create_delta_{table}.py"
 
-    print(f"Creating Delta table in Unity Catalog")
+    print(f"Creating Delta table (file-based metadata)")
     print(f"Table: {schema}.{table}")
     print(f"Source: {s3_path}")
     print(f"Storage: s3a://warehouse/{catalog}/{schema}/{table}")
     print(f"Mode: {mode}")
-    print(f"Query via Trino: delta.{schema}.{table}")
     print()
 
     # Write script to container
