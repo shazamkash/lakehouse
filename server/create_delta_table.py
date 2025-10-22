@@ -37,12 +37,14 @@ def create_delta_table(s3_path, catalog, schema, table, mode="overwrite"):
     # PySpark code to create Delta table
     pyspark_code = f"""
 from pyspark.sql import SparkSession
-from delta import configure_spark_with_delta_pip
 
-# Create Spark session
-builder = SparkSession.builder.appName("CreateDeltaTable")
-
-spark = configure_spark_with_delta_pip(builder).getOrCreate()
+# Create Spark session with Delta Lake configuration
+# JARs are already pre-loaded in /opt/bitnami/spark/jars/
+spark = SparkSession.builder \\
+    .appName("CreateDeltaTable") \\
+    .config("spark.sql.extensions", "io.delta.sql.DeltaSparkSessionExtension") \\
+    .config("spark.sql.catalog.spark_catalog", "org.apache.spark.sql.delta.catalog.DeltaCatalog") \\
+    .getOrCreate()
 
 # Read source data
 print(f"Reading data from {s3_path}")
