@@ -87,6 +87,9 @@ print("Step 5: Querying data via Trino...")
 print()
 
 try:
+    # Note: Tables are registered in Unity Catalog via Spark as unity.schema.table
+    # but Trino discovers them via file-based metastore as delta.schema.table
+
     # Query all data
     print("Query 1: All products")
     df = client.query_to_dataframe(

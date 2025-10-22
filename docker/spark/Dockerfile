@@ -17,6 +17,9 @@ WORKDIR /opt/bitnami/spark/jars-custom
 RUN wget https://repo1.maven.org/maven2/io/delta/delta-spark_2.12/3.3.0/delta-spark_2.12-3.3.0.jar && \
     wget https://repo1.maven.org/maven2/io/delta/delta-storage/3.3.0/delta-storage-3.3.0.jar
 
+# Download Unity Catalog Spark connector
+RUN wget https://repo1.maven.org/maven2/io/unitycatalog/unitycatalog-spark_2.12/0.2.0/unitycatalog-spark_2.12-0.2.0.jar
+
 # Download Hadoop AWS JARs for S3 support (compatible with Spark 3.5)
 RUN wget https://repo1.maven.org/maven2/org/apache/hadoop/hadoop-aws/3.3.4/hadoop-aws-3.3.4.jar && \
     wget https://repo1.maven.org/maven2/com/amazonaws/aws-java-sdk-bundle/1.12.367/aws-java-sdk-bundle-1.12.367.jar
@@ -34,7 +37,7 @@ RUN chown -R 1001:1001 /opt/bitnami/spark/jars-custom
 RUN cp /opt/bitnami/spark/jars-custom/*.jar /opt/bitnami/spark/jars/
 
 # Verify JARs are present
-RUN ls -lh /opt/bitnami/spark/jars/ | grep -E "(delta|hadoop-aws|aws-java-sdk)"
+RUN ls -lh /opt/bitnami/spark/jars/ | grep -E "(delta|hadoop-aws|aws-java-sdk|unitycatalog)"
 
 USER 1001
 
