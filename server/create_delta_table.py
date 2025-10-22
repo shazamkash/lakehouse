@@ -86,9 +86,9 @@ except Exception as e:
     print(f"Drop table note: {{e}}")
 
 create_table_sql = f'''
-CREATE TABLE {{{{table_name}}}}
+CREATE TABLE {{table_name}}
 USING DELTA
-LOCATION '{{{{delta_path}}}}'
+LOCATION '{{delta_path}}'
 '''
 
 spark.sql(create_table_sql)
